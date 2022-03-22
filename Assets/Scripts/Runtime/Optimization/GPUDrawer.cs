@@ -5,7 +5,7 @@ using UnityEngine.Rendering;
 
 public class GPUDrawer : Singleton<GPUDrawer>
 {
-    [Range( 128, 1023 )]
+    [Range( 128, 1023 )][Tooltip( "Лимит объектов на рендер за один проход" )]
     public int matrixLimit = 512;
     public bool receiveShadows = true;
     public ShadowCastingMode castShadows = ShadowCastingMode.On;

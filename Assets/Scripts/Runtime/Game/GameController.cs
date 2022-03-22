@@ -4,21 +4,25 @@ using UnityEngine;
 
 public class GameController : Singleton<GameController>
 {
+    [Tooltip( "Общее количество объектов" )]
     [Range( 2, 250 )]
     public byte objects = 100;
     
+    [Tooltip( "Масса каждого объекта" )]
     [Range( 5f, 20f )]
     public float mass = 5f;
     
+    [Tooltip( "Заполнение. 0-Кубы, 1-Сферы" )]
     [Range( 0f, 1f )]
     public float cubeOrSphereRatio = .5f;
     
+    [Tooltip( "Цвета при столкновении. \nВыбираются рандомно" )]
     public Color32[] colors = new Color32[]
     {
         Color.red, Color.green, Color.blue
     };
 
-    [Header( "Optimization" )]
+    [Header( "Optimization" )] [Tooltip( "Включить Graphics.DrawMesh \nDraws the same mesh multiple times using GPU instancing." )]
     public bool GPUInstance = true;
     public Material mainMaterial;
     
