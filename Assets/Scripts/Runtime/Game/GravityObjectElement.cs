@@ -3,6 +3,9 @@ using UnityEngine;
 public class GravityObjectElement : MonoBehaviour
 {
     internal GravityObject owner;
+    internal Color color { get; private set; } = Color.white;
+    internal MeshRenderer render { get; private set; }
+    internal MeshFilter meshFilter { get; private set; }
     
     Transform m_Transform;
     Collider m_Coll;
@@ -15,6 +18,8 @@ public class GravityObjectElement : MonoBehaviour
         m_Transform = transform;
         m_PrevPos = m_Transform.position;
         m_Coll = GetComponent<Collider>();
+        render = GetComponent<MeshRenderer>();
+        meshFilter = GetComponent<MeshFilter>();
     }
 
     public void SetColliderActive( bool value ) => m_Coll.enabled = value;
@@ -60,15 +65,16 @@ public class GravityObjectElement : MonoBehaviour
 
     public void ChangeColor()
     {
-        var mats = GameController.Get.materials;
-        if( mats.Length == 0 ) return;
-        
-        var rend = GetComponent<MeshRenderer>();
-        rend.sharedMaterial = mats[ Random.Range( 0, mats.Length ) ];
+        var colors = GameController.Get.colors;
+        if( colors.Length == 0 ) return;
+
+        color = colors[ Random.Range( 0, colors.Length ) ];
         
         if( GameController.Get.GPUInstance && GPUDrawer.Get != null )
         {
             GPUDrawer.Get.StartCoroutine( GPUDrawer.Get.RefreshGPUInstances() );
         }
+        
+        render.material.SetColor( "_Color", color );
     }
 };

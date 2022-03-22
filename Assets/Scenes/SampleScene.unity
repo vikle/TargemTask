@@ -363,8 +363,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2b29d9f298b32054581acd067361d15b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gravityObjectCount: 5
-  gravityObjectMass: 15
+  objects: 100
+  mass: 5
   cubeOrSphereRatio: 0.5
   materials:
   - {fileID: 2100000, guid: dfa53f3f7c8fc1248a6e33e5f6049d23, type: 2}

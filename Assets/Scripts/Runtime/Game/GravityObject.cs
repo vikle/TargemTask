@@ -23,7 +23,7 @@ public class GravityObject : MonoBehaviour
         m_Transform = transform;
         if( s_GravityPoint == null ) s_GravityPoint = GravityPoint.Get.getTransform;
         torque = Random.rotation.eulerAngles;
-        mass = GameController.Get.gravityObjectMass;
+        mass = GameController.Get.mass;
 
         CreateElements();
         SelectRandomAnchor();
@@ -91,15 +91,12 @@ public class GravityObject : MonoBehaviour
             }
         }
         
-        if( impulse.magnitude > 10f )
+        var impulse_pos = s_GravityPoint.position + impulse;
+        next_position = Vector3.Lerp( next_position, impulse_pos, deltaTime / 2f );
+        impulse = Vector3.Lerp( impulse, Vector3.zero, deltaTime * mass / 2f );
+        
+        if( m_CollidersEnabled == false && impulse.magnitude < 10f )
         {
-            var impulse_pos = s_GravityPoint.position + impulse;
-            next_position = Vector3.Lerp( next_position, impulse_pos, deltaTime / 2f );
-            impulse = Vector3.Lerp( impulse, Vector3.zero, deltaTime * mass / 2f );
-        }
-        else if( m_CollidersEnabled == false )
-        {
-            impulse = Vector3.zero;
             SetCollidersActive( true );
         }
         

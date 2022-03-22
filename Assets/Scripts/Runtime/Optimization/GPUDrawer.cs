@@ -14,7 +14,7 @@ public class GPUDrawer : Singleton<GPUDrawer>
     public sealed class MeshData
     {
         public Mesh mesh;
-        public Material material;
+        public Color color = Color.white;
         internal MaterialPropertyBlock materialBlock = new MaterialPropertyBlock();
         public List<Transform> transforms = new List<Transform>();
         internal List<Matrix4x4> rendMatrix = new List<Matrix4x4>();
@@ -35,7 +35,7 @@ public class GPUDrawer : Singleton<GPUDrawer>
     
     Material m_MainMaterial;
     bool m_Refreshing;
-    MeshFilter[] m_SceneMeshes;
+    GravityObjectElement[] m_SceneObjects;
     
     
     void Awake() => enabled = false;
@@ -43,7 +43,7 @@ public class GPUDrawer : Singleton<GPUDrawer>
     {
         enabled = true;
         m_MainMaterial = GameController.Get.mainMaterial;
-        m_SceneMeshes = GameController.Get.objectsParent.GetComponentsInChildren<MeshFilter>( true );
+        m_SceneObjects = GameController.Get.objectsParent.GetComponentsInChildren<GravityObjectElement>( true );
     }
 
     // is called once per frame
@@ -79,16 +79,15 @@ public class GPUDrawer : Singleton<GPUDrawer>
     {
         if( m_Refreshing ) yield break;
         m_Refreshing = true;
-        if( m_SceneMeshes == null ) Init();
+        if( m_SceneObjects == null ) Init();
         yield return null;
         meshes.Clear();
 
         bool rend_enabled = !GameController.Get.GPUInstance;
         
-        for( int i = 0; i < m_SceneMeshes.Length; i++ )
+        for( int i = 0; i < m_SceneObjects.Length; i++ )
         {
-            var rend = m_SceneMeshes[i].GetComponent<Renderer>();
-            rend.enabled = rend_enabled;
+            m_SceneObjects[i].render.enabled = rend_enabled;
 
             if( rend_enabled ) continue;
             
@@ -97,9 +96,9 @@ public class GPUDrawer : Singleton<GPUDrawer>
             for( int j = 0; j < meshes.Count; j++ )
             {
                 if( meshes[j].transforms.Count >= matrixLimit ) continue;
-                if( meshes[j].mesh != m_SceneMeshes[i].sharedMesh || meshes[j].material != rend.sharedMaterial ) continue;
+                if( meshes[j].mesh != m_SceneObjects[i].meshFilter.sharedMesh || meshes[j].color != m_SceneObjects[i].color ) continue;
                 have_it = true;
-                meshes[j].transforms.Add( m_SceneMeshes[i].transform );
+                meshes[j].transforms.Add( m_SceneObjects[i].transform );
                 break;
             }
             
@@ -107,12 +106,12 @@ public class GPUDrawer : Singleton<GPUDrawer>
             
             var md = new MeshData
             {
-                mesh = m_SceneMeshes[i].sharedMesh,
-                material = rend.sharedMaterial,
+                mesh = m_SceneObjects[i].meshFilter.sharedMesh,
+                color = m_SceneObjects[i].color
             };
 
-            md.materialBlock.SetColor( "_Color", md.material.GetColor( "_Color" ) );
-            md.transforms.Add( m_SceneMeshes[i].transform );
+            md.materialBlock.SetColor( "_Color", md.color );
+            md.transforms.Add( m_SceneObjects[i].transform );
 
             meshes.Add( md );
         }
