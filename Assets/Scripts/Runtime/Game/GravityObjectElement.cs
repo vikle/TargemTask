@@ -1,80 +1,93 @@
 using UnityEngine;
 
-public class GravityObjectElement : MonoBehaviour
+public sealed class GravityObjectElement : MonoBehaviour
 {
-    internal GravityObject owner;
-    internal Color color { get; private set; } = Color.white;
-    internal MeshRenderer render { get; private set; }
-    internal MeshFilter meshFilter { get; private set; }
-    
-    Transform m_Transform;
-    Collider m_Coll;
-    Vector3 m_PrevPos;
-    
+    public GravityObject owner;
+    public Color Color { get; private set; } = Color.white;
+    public MeshRenderer Render { get; private set; }
+    public MeshFilter MeshFilter { get; private set; }
+
+    Transform m_transform;
+    Collider m_coll;
+    Vector3 m_prevPos;
+
+    // for DI
+    GravityService m_gravityService;
+    ClashesCounterService m_clashesCounterService;
+    MeshRendererService m_meshRendererService;
     
     // is called before the first frame update
-    public void Init()
+    public void Init(GravityService gravityService, 
+                     ClashesCounterService clashesCounterService, 
+                     MeshRendererService meshRendererService)
     {
-        m_Transform = transform;
-        m_PrevPos = m_Transform.position;
-        m_Coll = GetComponent<Collider>();
-        render = GetComponent<MeshRenderer>();
-        meshFilter = GetComponent<MeshFilter>();
+        m_gravityService = gravityService;
+        m_clashesCounterService = clashesCounterService;
+        m_meshRendererService = meshRendererService;
+
+        m_transform = transform;
+        m_prevPos = m_transform.position;
+        m_coll = GetComponent<Collider>();
+        Render = GetComponent<MeshRenderer>();
+        MeshFilter = GetComponent<MeshFilter>();
     }
 
-    public void SetColliderActive( bool value ) => m_Coll.enabled = value;
+    public void SetColliderActive(bool value) => m_coll.enabled = value;
 
-    public void OnBoxCast( float deltaTime )
+    public void OnBoxCast(float deltaTime)
     {
-        var velocity = m_Transform.position - m_PrevPos;
-        var bounds = m_Coll.bounds;
+        var velocity = (m_transform.position - m_prevPos);
+        var bounds = m_coll.bounds;
 
-        if( Physics.BoxCast( bounds.center, bounds.extents, velocity.normalized
-            , out var hit
-            , m_Transform.rotation, velocity.magnitude ) )
+        if (Physics.BoxCast(bounds.center, 
+                            bounds.extents, 
+                            velocity.normalized, 
+                            out var hit, 
+                            m_transform.rotation, 
+                            velocity.magnitude))
         {
             var other = hit.collider.GetComponent<GravityObjectElement>();
-            if( other != null && other.owner != owner )
+            if (other != null && other.owner != owner)
             {
                 var impulse_dir = velocity.normalized;
                 var impulse = impulse_dir * owner.mass / deltaTime;
 
                 float mult = Random.value;
-                other.owner.impulse = impulse * ( mult * 1.5f );
-                owner.impulse = impulse * -mult;
-                
-                other.owner.OnMovementUpdate( false, deltaTime );
+                other.owner.Impulse = (impulse * (mult * 1.5f));
+                owner.Impulse = (impulse * -mult);
 
-                other.owner.torque = impulse_dir;
-                owner.torque = -impulse_dir;
-                
+                other.owner.OnMovementUpdate(false, deltaTime);
+
+                other.owner.Torque = impulse_dir;
+                owner.Torque = -impulse_dir;
+
                 other.owner.SelectRandomAnchor();
-                
+
                 other.ChangeColor();
                 ChangeColor();
-                
-                other.owner.SetCollidersActive( false );
-                owner.SetCollidersActive( false );
 
-                CountersController.Get.AddClashe();
+                other.owner.SetCollidersActive(false);
+                owner.SetCollidersActive(false);
+
+                m_clashesCounterService.AddClash();
             }
         }
 
-        m_PrevPos = m_Transform.position;
+        m_prevPos = m_transform.position;
     }
 
     public void ChangeColor()
     {
-        var colors = GameController.Get.colors;
-        if( colors.Length == 0 ) return;
+        var colors = m_gravityService.colors;
+        if (colors.Length == 0) return;
 
-        color = colors[ Random.Range( 0, colors.Length ) ];
-        
-        if( GameController.Get.GPUInstance && GPUDrawer.Get != null )
+        Color = colors[Random.Range(0, colors.Length)];
+
+        if (m_gravityService.GPUInstance && m_meshRendererService != null)
         {
-            GPUDrawer.Get.StartCoroutine( GPUDrawer.Get.RefreshGPUInstances() );
+            m_meshRendererService.StartCoroutine(m_meshRendererService.RefreshGPUInstances());
         }
-        
-        render.material.SetColor( "_Color", color );
+
+        Render.material.SetColor("_Color", Color);
     }
 };
