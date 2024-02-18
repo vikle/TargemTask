@@ -32,7 +32,8 @@ public sealed class GravityObjectElement : MonoBehaviour
         MeshFilter = GetComponent<MeshFilter>();
     }
 
-    public void SetColliderActive(bool value) => m_coll.enabled = value;
+    public void SetColliderActive(bool value) 
+        => m_coll.enabled = value;
 
     public void OnBoxCast(float deltaTime)
     {

@@ -1,9 +1,17 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
-public sealed class GravityService : MonoBehaviour, IEngineService
+public sealed class GravityService : MonoBehaviour, 
+                                     IEngineService, 
+                                     IStartEngineEventHandler, 
+                                     IFixedUpdateEngineEventHandler
 {
+    public bool isEnabled = true;
+    public bool IsEnabled => isEnabled;
+    
+    [Space]
     [Tooltip("Общее количество объектов")]
     [Range(2, 250)]public byte objects = 100;
 
@@ -44,24 +52,25 @@ public sealed class GravityService : MonoBehaviour, IEngineService
         mrs.StartCoroutine(mrs.RefreshGPUInstances());
     }
 
+    void IStartEngineEventHandler.OnStart()
+        => StartCoroutine(CreateObjects());
 
     // is called before the first frame update
-    IEnumerator Start()
+    IEnumerator CreateObjects()
     {
-        enabled = false;
+        isEnabled = false;
         yield return CreateGravityPoint();
         yield return CreateGravityObjects();
-        enabled = true;
+        isEnabled = true;
     }
 
-    void FixedUpdate() 
-        => OnUpdate(Time.fixedDeltaTime);
-
-    private void OnUpdate(float deltaTime)
+    void IFixedUpdateEngineEventHandler.OnFixedUpdate()
     {
+        float delta_time = Time.fixedDeltaTime;
+        
         for (int i = 0, i_max = m_gravityObjects.Count; i < i_max; i++)
         {
-            m_gravityObjects[i].OnMovementUpdate(true, deltaTime);
+            m_gravityObjects[i].OnMovementUpdate(true, delta_time);
         }
     }
 

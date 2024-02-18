@@ -3,8 +3,15 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-public sealed class MeshRendererService : MonoBehaviour, IEngineService
+public sealed class MeshRendererService : MonoBehaviour, 
+                                          IEngineService,
+                                          IAwakeEngineEventHandler,
+                                          IUpdateEngineEventHandler
 {
+    public bool isEnabled = true;
+    public bool IsEnabled => isEnabled;
+    
+    [Space]
     [Range(128, 1023), Tooltip("Лимит объектов на рендер за один проход")]
     public int matrixLimit = 512;
     public bool receiveShadows = true;
@@ -14,8 +21,7 @@ public sealed class MeshRendererService : MonoBehaviour, IEngineService
     readonly GravityService m_gravityService;
     
     
-    [System.Serializable]
-    public sealed class MeshData
+    private sealed class MeshData
     {
         public Mesh mesh;
         public Color color = Color.white;
@@ -23,7 +29,7 @@ public sealed class MeshRendererService : MonoBehaviour, IEngineService
         public List<Transform> transforms = new List<Transform>();
         internal List<Matrix4x4> rendMatrix = new List<Matrix4x4>();
 
-        internal void UpdateRenderMatrix()
+        public void UpdateRenderMatrix()
         {
             rendMatrix.Clear();
 
@@ -34,7 +40,7 @@ public sealed class MeshRendererService : MonoBehaviour, IEngineService
         }
     };
 
-    public List<MeshData> meshes = new List<MeshData>();
+    readonly List<MeshData> m_meshes = new List<MeshData>();
 
 
     Material m_mainMaterial;
@@ -43,24 +49,24 @@ public sealed class MeshRendererService : MonoBehaviour, IEngineService
     static readonly int sr_color = Shader.PropertyToID("_Color");
 
 
-    void Awake()
-        => enabled = false;
+    void IAwakeEngineEventHandler.OnAwake()
+        => isEnabled = false;
 
     public void Init()
     {
-        enabled = true;
+        isEnabled = true;
         m_mainMaterial = m_gravityService.mainMaterial;
         m_sceneObjects = m_gravityService.ObjectsParent.GetComponentsInChildren<GravityObjectElement>(true);
     }
 
     // is called once per frame
-    void Update()
+    void IUpdateEngineEventHandler.OnUpdate()
     {
         if (m_mainMaterial == null) return;
 
-        for (int i = 0, i_max = meshes.Count; i < i_max; i++)
+        for (int i = 0, i_max = m_meshes.Count; i < i_max; i++)
         {
-            var mesh = meshes[i];
+            var mesh = m_meshes[i];
             mesh.UpdateRenderMatrix();
             
             Graphics.DrawMeshInstanced(mesh.mesh, 
@@ -87,7 +93,7 @@ public sealed class MeshRendererService : MonoBehaviour, IEngineService
         m_refreshing = true;
         if (m_sceneObjects == null) Init();
         yield return null;
-        meshes.Clear();
+        m_meshes.Clear();
 
         bool rend_enabled = !m_gravityService.GPUInstance;
 
@@ -100,9 +106,9 @@ public sealed class MeshRendererService : MonoBehaviour, IEngineService
 
             bool have_it = false;
 
-            for (int j = 0, j_max = meshes.Count; j < j_max; j++)
+            for (int j = 0, j_max = m_meshes.Count; j < j_max; j++)
             {
-                var mesh = meshes[j];
+                var mesh = m_meshes[j];
                 if (mesh.transforms.Count >= matrixLimit) continue;
                 if (mesh.mesh != scn_obj.MeshFilter.sharedMesh || mesh.color != scn_obj.Color) continue;
                 mesh.transforms.Add(scn_obj.transform);
@@ -121,7 +127,7 @@ public sealed class MeshRendererService : MonoBehaviour, IEngineService
             md.materialBlock.SetColor(sr_color, md.color);
             md.transforms.Add(scn_obj.transform);
 
-            meshes.Add(md);
+            m_meshes.Add(md);
         }
 
         yield return null;

@@ -1,7 +1,12 @@
 using UnityEngine;
 
-public sealed class ClashesCounterService : MonoBehaviour, IEngineService
+public sealed class ClashesCounterService : MonoBehaviour, 
+                                            IEngineService,
+                                            IUpdateEngineEventHandler
 {
+    public bool isEnabled = true;
+    public bool IsEnabled => isEnabled;
+    
     public int Clashes { get; private set; }
     public int TimeInSeconds { get; private set; }
 
@@ -12,7 +17,7 @@ public sealed class ClashesCounterService : MonoBehaviour, IEngineService
     readonly UIService m_uiService;
     
     // is called once per frame
-    void Update()
+    void IUpdateEngineEventHandler.OnUpdate()
     {
         m_elapsed += Time.deltaTime;
         if (m_elapsed < 1f) return;

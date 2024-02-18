@@ -1,8 +1,13 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-public sealed class UIService : MonoBehaviour, IEngineService
+public sealed class UIService : MonoBehaviour, 
+                                IEngineService,
+                                IStartEngineEventHandler
 {
+    public bool IsEnabled => true;
+    
+    [Space]
     public Text clashesLabel;
     public Text timeLabel;
 
@@ -10,7 +15,7 @@ public sealed class UIService : MonoBehaviour, IEngineService
     readonly ClashesCounterService m_clashesCounterService;
     
     
-    void Start() 
+    void IStartEngineEventHandler.OnStart() 
         => RefreshUI();
 
     public void OnResetCounters() 
